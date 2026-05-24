@@ -45,6 +45,14 @@ export const getPatients = async () => {
   })
 }
 
+export const createPatient = async (data: any) => {
+  return pb.collection('users').create({
+    ...data,
+    role: 'patient',
+    passwordConfirm: data.password,
+  })
+}
+
 export const getPayments = async () => {
   return pb.collection('payments').getFullList({
     expand: 'patient',

@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { cn } from '@/lib/utils'
 import { AppointmentDetailsDialog } from '@/components/calendar/AppointmentDetailsDialog'
 import { BookingDialog } from '@/components/calendar/BookingDialog'
+import { PsychologistBookingDialog } from '@/components/calendar/PsychologistBookingDialog'
 
 export default function CalendarPage() {
   const { user } = useAuth()
@@ -17,6 +18,7 @@ export default function CalendarPage() {
 
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [bookingOpen, setBookingOpen] = useState(false)
+  const [psychBookingOpen, setPsychBookingOpen] = useState(false)
   const [selectedAppt, setSelectedAppt] = useState<any>(null)
   const [selectedSlot, setSelectedSlot] = useState({ date: new Date(), hour: 9 })
 
@@ -28,6 +30,7 @@ export default function CalendarPage() {
   useEffect(() => {
     loadData()
   }, [currentDate])
+
   useRealtime('appointments', () => {
     loadData()
   })
@@ -64,26 +67,36 @@ export default function CalendarPage() {
           <h1 className="text-3xl font-serif text-primary">Calendário</h1>
           <p className="text-muted-foreground mt-1">Gerencie suas sessões e horários.</p>
         </div>
-        <div className="flex items-center gap-2 bg-background/50 p-1.5 rounded-full border shadow-sm">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full"
-            onClick={() => setCurrentDate(addDays(currentDate, -7))}
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-          <span className="font-medium text-sm px-4 min-w-[140px] text-center">
-            {format(weekStart, 'MMMM, yyyy', { locale: ptBR })}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full"
-            onClick={() => setCurrentDate(addDays(currentDate, 7))}
-          >
-            <ChevronRight className="w-5 h-5" />
-          </Button>
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          {user?.role === 'psychologist' && (
+            <Button
+              onClick={() => setPsychBookingOpen(true)}
+              className="rounded-full shadow-sm mb-2 sm:mb-0 w-full sm:w-auto"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Novo Agendamento
+            </Button>
+          )}
+          <div className="flex items-center gap-2 bg-background/50 p-1.5 rounded-full border shadow-sm w-full sm:w-auto justify-between sm:justify-start">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full shrink-0"
+              onClick={() => setCurrentDate(addDays(currentDate, -7))}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+            <span className="font-medium text-sm px-4 min-w-[140px] text-center shrink-0">
+              {format(weekStart, 'MMMM, yyyy', { locale: ptBR })}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full shrink-0"
+              onClick={() => setCurrentDate(addDays(currentDate, 7))}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -181,6 +194,7 @@ export default function CalendarPage() {
         slotDate={selectedSlot.date}
         slotHour={selectedSlot.hour}
       />
+      <PsychologistBookingDialog open={psychBookingOpen} onOpenChange={setPsychBookingOpen} />
     </div>
   )
 }
