@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-24T03:52:13.970Z",
+  "generatedAt": "2026-05-24T03:59:36.306Z",
   "collections": [
     {
       "name": "users",
@@ -72,6 +72,12 @@
         {
           "name": "documents",
           "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "notifications_enabled",
+          "type": "bool",
           "required": false,
           "system": false
         }

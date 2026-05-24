@@ -8,6 +8,7 @@ export interface User {
   role: 'patient' | 'psychologist' | 'admin'
   avatar?: string
   bio?: string
+  notifications_enabled?: boolean
 }
 
 interface AuthContextType {

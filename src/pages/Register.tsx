@@ -18,6 +18,17 @@ export default function Register() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/
+    if (!emailRegex.test(email)) {
+      toast({
+        title: 'E-mail inválido',
+        description: 'Por favor, insira um e-mail válido (ex: nome@dominio.com).',
+        variant: 'destructive',
+      })
+      return
+    }
+
     setLoading(true)
     const { error } = await signUp(email, password, name)
     setLoading(false)

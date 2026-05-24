@@ -11,7 +11,9 @@ import pb from '@/lib/pocketbase/client'
 export default function SettingsPage() {
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    user?.notifications_enabled ?? false,
+  )
 
   const [name, setName] = useState(user?.name || '')
   const [email, setEmail] = useState(user?.email || '')
@@ -30,35 +32,53 @@ export default function SettingsPage() {
       }
     }
 
-    if ('Notification' in window) {
-      setNotificationsEnabled(Notification.permission === 'granted')
-    }
+    setNotificationsEnabled(user?.notifications_enabled ?? false)
   }, [user])
 
   const handleNotificationToggle = async (checked: boolean) => {
-    if (!('Notification' in window)) {
-      toast({ title: 'Notificações não suportadas neste navegador.', variant: 'destructive' })
-      return
-    }
+    const previousState = notificationsEnabled
+    setNotificationsEnabled(checked)
 
-    if (checked) {
-      const permission = await Notification.requestPermission()
-      if (permission === 'granted') {
-        setNotificationsEnabled(true)
-        toast({ title: 'Notificações ativadas com sucesso!' })
-      } else {
-        setNotificationsEnabled(false)
-        toast({ title: 'Permissão para notificações foi negada.', variant: 'destructive' })
+    try {
+      if (checked && 'Notification' in window && Notification.permission !== 'granted') {
+        const permission = await Notification.requestPermission()
+        if (permission !== 'granted') {
+          setNotificationsEnabled(false)
+          toast({
+            title: 'Permissão para notificações foi negada pelo navegador.',
+            variant: 'destructive',
+          })
+          return
+        }
       }
-    } else {
-      setNotificationsEnabled(false)
-      toast({ title: 'Notificações desativadas (ajuste no navegador se necessário).' })
+
+      if (user?.id) {
+        await pb.collection('users').update(user.id, { notifications_enabled: checked })
+      }
+      toast({ title: checked ? 'Notificações ativadas' : 'Notificações desativadas' })
+    } catch (err: any) {
+      setNotificationsEnabled(previousState)
+      toast({
+        title: 'Erro ao salvar preferência',
+        description: err.message,
+        variant: 'destructive',
+      })
     }
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user?.id) return
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/
+    if (!emailRegex.test(email)) {
+      toast({
+        title: 'E-mail inválido',
+        description: 'Por favor, insira um e-mail válido.',
+        variant: 'destructive',
+      })
+      return
+    }
 
     setLoading(true)
     try {
