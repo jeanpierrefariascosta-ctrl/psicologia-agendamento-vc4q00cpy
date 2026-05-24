@@ -46,11 +46,18 @@ export const getPatients = async () => {
 }
 
 export const createPatient = async (data: any) => {
+  if (data instanceof FormData) {
+    return pb.collection('users').create(data)
+  }
   return pb.collection('users').create({
     ...data,
     role: 'patient',
     passwordConfirm: data.password,
   })
+}
+
+export const updatePatient = async (id: string, data: any) => {
+  return pb.collection('users').update(id, data)
 }
 
 export const getPayments = async () => {

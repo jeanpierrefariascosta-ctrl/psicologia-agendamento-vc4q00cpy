@@ -25,11 +25,17 @@ export function AppHeader() {
 
   useEffect(() => {
     loadNotifications()
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
   }, [user])
 
   useRealtime('notifications', (e) => {
     if (e.action === 'create' && e.record.recipient === user?.id) {
       toast({ title: 'Nova Notificação', description: e.record.message })
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Sereno - Nova Notificação', { body: e.record.message })
+      }
       loadNotifications()
     }
     if (e.action === 'update' && e.record.recipient === user?.id) {
