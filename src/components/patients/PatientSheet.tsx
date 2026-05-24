@@ -56,6 +56,7 @@ export function PatientSheet({ open, onOpenChange, patient, onSaved }: any) {
       formData.append('password', password)
       formData.append('passwordConfirm', password)
       formData.append('role', 'patient')
+      formData.append('first_login', 'true')
     } else if (password) {
       formData.append('password', password)
       formData.append('passwordConfirm', password)

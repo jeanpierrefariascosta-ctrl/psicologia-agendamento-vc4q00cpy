@@ -51,8 +51,8 @@ export default function Register() {
           <div className="mx-auto w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mb-2">
             <span className="text-primary font-serif text-2xl font-bold">~</span>
           </div>
-          <CardTitle className="text-3xl font-serif text-primary">Cadastro</CardTitle>
-          <CardDescription>Crie sua conta para acessar o sistema</CardDescription>
+          <CardTitle className="text-3xl font-serif text-primary">Cadastro Profissional</CardTitle>
+          <CardDescription>Crie sua conta de psicólogo para acessar o sistema</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">

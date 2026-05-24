@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Calendar, LayoutDashboard, Settings, Users, LogOut } from 'lucide-react'
+import { Calendar, LayoutDashboard, Settings, Users, LogOut, CreditCard } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -22,10 +22,11 @@ export function AppSidebar() {
     { title: 'Calendário', icon: Calendar, url: '/calendar' },
   ]
 
-  if (user?.role === 'psychologist') {
+  if (user?.role === 'psychologist' || user?.role === 'admin') {
     navItems.push({ title: 'Pacientes', icon: Users, url: '/patients' })
   }
 
+  navItems.push({ title: 'Pagamentos', icon: CreditCard, url: '/payments' })
   navItems.push({ title: 'Configurações', icon: Settings, url: '/settings' })
 
   return (

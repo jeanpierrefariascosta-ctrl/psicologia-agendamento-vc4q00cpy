@@ -87,3 +87,15 @@ export const createPayment = async (data: Partial<any>) => {
 export const updatePayment = async (id: string, data: Partial<any>) => {
   return pb.collection('payments').update(id, data)
 }
+
+export const getRecurringPayments = async (psychologistId: string) => {
+  return pb.collection('recurring_payments').getFullList({
+    filter: `psychologist="${psychologistId}"`,
+    expand: 'patient',
+    sort: '-created',
+  })
+}
+
+export const createRecurringPayment = async (data: Partial<any>) => {
+  return pb.collection('recurring_payments').create(data)
+}

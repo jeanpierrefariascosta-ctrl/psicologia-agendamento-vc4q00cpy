@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-24T03:59:36.306Z",
+  "generatedAt": "2026-05-24T17:46:16.481Z",
   "collections": [
     {
       "name": "users",
@@ -77,6 +77,12 @@
         },
         {
           "name": "notifications_enabled",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "first_login",
           "type": "bool",
           "required": false,
           "system": false
@@ -296,6 +302,79 @@
           "required": true,
           "system": false,
           "selectValues": ["pending", "paid", "overdue"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "name": "recurring_payments",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (psychologist = @request.auth.id || @request.auth.role = 'admin')",
+        "view": "@request.auth.id != '' && (psychologist = @request.auth.id || @request.auth.role = 'admin')",
+        "create": "@request.auth.id != '' && (psychologist = @request.auth.id || @request.auth.role = 'admin')",
+        "update": "@request.auth.id != '' && (psychologist = @request.auth.id || @request.auth.role = 'admin')",
+        "delete": "@request.auth.id != '' && (psychologist = @request.auth.id || @request.auth.role = 'admin')"
+      },
+      "fields": [
+        {
+          "name": "patient",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "psychologist",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "plan_name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "frequency",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["weekly", "bi_weekly", "monthly"]
+        },
+        {
+          "name": "next_billing_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "active",
+          "type": "bool",
+          "required": false,
+          "system": false
         },
         {
           "name": "created",

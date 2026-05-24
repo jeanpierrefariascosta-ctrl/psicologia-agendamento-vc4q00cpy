@@ -9,6 +9,7 @@ export interface User {
   avatar?: string
   bio?: string
   notifications_enabled?: boolean
+  first_login?: boolean
 }
 
 interface AuthContextType {
@@ -67,7 +68,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await pb
         .collection('users')
-        .create({ email, password, passwordConfirm: password, name, role: 'patient' })
+        .create({
+          email,
+          password,
+          passwordConfirm: password,
+          name,
+          role: 'psychologist',
+          first_login: false,
+        })
       await pb.collection('users').authWithPassword(email, password)
       return { error: null }
     } catch (error) {

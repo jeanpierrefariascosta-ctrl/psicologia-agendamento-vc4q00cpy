@@ -82,7 +82,7 @@ export default function Login() {
 
           <div className="mt-6 text-center text-sm">
             <Link to="/register" className="text-primary hover:underline font-medium">
-              Ainda não tem conta? Cadastre-se
+              É psicólogo e não tem conta? Cadastre-se
             </Link>
           </div>
 

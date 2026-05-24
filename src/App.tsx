@@ -12,6 +12,8 @@ import CalendarPage from './pages/CalendarPage'
 import PatientsPage from './pages/PatientsPage'
 import SettingsPage from './pages/SettingsPage'
 import NotFound from './pages/NotFound'
+import ChangePassword from './pages/ChangePassword'
+import PaymentsPage from './pages/PaymentsPage'
 
 const App = () => (
   <BrowserRouter future={{ v7_startTransition: false, v7_relativeSplatPath: false }}>
@@ -23,11 +25,13 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route element={<ProtectedRoute />}>
+            <Route path="/change-password" element={<ChangePassword />} />
             <Route element={<Layout />}>
               <Route path="/" element={<Index />} />
               <Route path="/calendar" element={<CalendarPage />} />
               {/* Placeholders for links */}
               <Route path="/patients" element={<PatientsPage />} />
+              <Route path="/payments" element={<PaymentsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>
