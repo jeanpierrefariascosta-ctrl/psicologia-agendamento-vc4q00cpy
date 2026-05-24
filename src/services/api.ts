@@ -15,6 +15,13 @@ export const updateAppointment = async (id: string, data: Partial<any>) => {
   return pb.collection('appointments').update(id, data)
 }
 
+export const cancelAppointment = async (id: string, appt: any, reason: string, userId?: string) => {
+  return pb.collection('appointments').update(id, {
+    status: 'cancelled',
+    cancel_reason: reason,
+  })
+}
+
 export const getNotifications = async (userId: string) => {
   return pb.collection('notifications').getFullList({
     filter: `recipient="${userId}"`,
