@@ -10,6 +10,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import CalendarPage from './pages/CalendarPage'
 import PatientsPage from './pages/PatientsPage'
+import SettingsPage from './pages/SettingsPage'
 import NotFound from './pages/NotFound'
 
 const App = () => (
@@ -27,14 +28,7 @@ const App = () => (
               <Route path="/calendar" element={<CalendarPage />} />
               {/* Placeholders for links */}
               <Route path="/patients" element={<PatientsPage />} />
-              <Route
-                path="/settings"
-                element={
-                  <div className="p-8 text-center text-muted-foreground">
-                    Configurações em desenvolvimento.
-                  </div>
-                }
-              />
+              <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>
           <Route path="*" element={<NotFound />} />

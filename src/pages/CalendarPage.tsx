@@ -48,10 +48,11 @@ export default function CalendarPage() {
   }
 
   const statusStyles = {
-    scheduled: 'bg-primary/20 text-primary-foreground/80 border-primary/30',
-    completed: 'bg-green-500/20 text-green-700 border-green-500/30',
-    cancelled: 'bg-muted/50 text-muted-foreground border-border/50 line-through opacity-70',
-    no_show: 'bg-destructive/20 text-destructive-foreground border-destructive/30',
+    scheduled: 'bg-blue-500/20 text-blue-700 border-blue-500/30 dark:text-blue-400',
+    completed: 'bg-green-500/20 text-green-700 border-green-500/30 dark:text-green-400',
+    cancelled:
+      'bg-red-500/20 text-red-700 border-red-500/30 line-through opacity-70 dark:text-red-400',
+    no_show: 'bg-red-500/20 text-red-700 border-red-500/30 dark:text-red-400',
   }
 
   return (

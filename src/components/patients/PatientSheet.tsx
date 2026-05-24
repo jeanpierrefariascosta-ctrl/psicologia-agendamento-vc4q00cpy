@@ -61,11 +61,15 @@ export function PatientSheet({ open, onOpenChange, patient, onSaved }: any) {
       formData.append('passwordConfirm', password)
     }
 
-    if (patient?.documents && patient.documents.length > 0) {
-      patient.documents.forEach((doc: string) => {
-        formData.append('documents', doc)
-      })
-    }
+    const existingDocs = Array.isArray(patient?.documents)
+      ? patient.documents
+      : patient?.documents
+        ? [patient.documents]
+        : []
+
+    existingDocs.forEach((doc: string) => {
+      formData.append('documents', doc)
+    })
 
     files.forEach((f) => {
       formData.append('documents', f)
@@ -150,6 +154,7 @@ export function PatientSheet({ open, onOpenChange, patient, onSaved }: any) {
                   <Input
                     required={!patient}
                     type="password"
+                    minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
@@ -176,11 +181,16 @@ export function PatientSheet({ open, onOpenChange, patient, onSaved }: any) {
             <div className="space-y-4 pt-6 border-t border-border/50">
               <h3 className="text-lg font-medium text-foreground/80">Documentos</h3>
 
-              {patient?.documents && patient.documents.length > 0 && (
+              {(Array.isArray(patient?.documents)
+                ? patient.documents.length > 0
+                : !!patient?.documents) && (
                 <div className="space-y-2 mb-4">
                   <Label className="text-xs text-muted-foreground">Arquivos Salvos</Label>
                   <div className="grid gap-2">
-                    {patient.documents.map((doc: string) => (
+                    {(Array.isArray(patient?.documents)
+                      ? patient.documents
+                      : [patient.documents]
+                    ).map((doc: string) => (
                       <a
                         key={doc}
                         href={pb.files.getURL(patient, doc)}

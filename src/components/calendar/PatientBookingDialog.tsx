@@ -154,11 +154,26 @@ export function PatientBookingDialog({
                 <SelectValue placeholder="Selecione o psicólogo(a)" />
               </SelectTrigger>
               <SelectContent>
-                {psychs.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
+                {psychs.map((p) => {
+                  let specText = ''
+                  if (p.specialties) {
+                    try {
+                      const specs =
+                        typeof p.specialties === 'string'
+                          ? JSON.parse(p.specialties)
+                          : p.specialties
+                      specText = Array.isArray(specs) ? ` - ${specs.join(', ')}` : ` - ${specs}`
+                    } catch (e) {
+                      specText = typeof p.specialties === 'string' ? ` - ${p.specialties}` : ''
+                    }
+                  }
+                  return (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                      {specText}
+                    </SelectItem>
+                  )
+                })}
               </SelectContent>
             </Select>
           </div>

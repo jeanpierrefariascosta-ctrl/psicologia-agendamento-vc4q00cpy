@@ -73,13 +73,17 @@ export function AppSidebar() {
             </p>
           </div>
         </div>
-        <SidebarMenuButton
-          onClick={signOut}
-          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>Sair</span>
-        </SidebarMenuButton>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={signOut}
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sair</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   )

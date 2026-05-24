@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-05-24T03:40:27.442Z",
+  "generatedAt": "2026-05-24T03:52:13.970Z",
   "collections": [
     {
       "name": "users",
       "type": "auth",
       "apiRules": {
-        "list": "id = @request.auth.id || @request.auth.role = 'psychologist' || @request.auth.role = 'admin'",
-        "view": "id = @request.auth.id || @request.auth.role = 'psychologist' || @request.auth.role = 'admin'",
-        "create": "",
+        "list": "id = @request.auth.id || @request.auth.role = 'psychologist' || @request.auth.role = 'admin' || (@request.auth.role = 'patient' && role = 'psychologist')",
+        "view": "id = @request.auth.id || @request.auth.role = 'psychologist' || @request.auth.role = 'admin' || (@request.auth.role = 'patient' && role = 'psychologist')",
+        "create": "@request.auth.role = 'psychologist' || @request.auth.role = 'admin'",
         "update": "id = @request.auth.id || @request.auth.role = 'psychologist' || @request.auth.role = 'admin'",
         "delete": "id = @request.auth.id"
       },
