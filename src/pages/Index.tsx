@@ -1,234 +1,384 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Calendar as CalendarIcon, Clock, ArrowRight, Activity, CheckCircle2 } from 'lucide-react'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
-import { getAppointments } from '@/services/api'
+import {
+  getAppointments,
+  getPayments,
+  updatePayment,
+  createPayment,
+  getPatients,
+} from '@/services/api'
 import { useRealtime } from '@/hooks/use-realtime'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { format, isThisMonth, parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { Plus, Calendar, DollarSign, Activity } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { toast } from '@/hooks/use-toast'
 
 export default function Index() {
   const { user } = useAuth()
   const [appointments, setAppointments] = useState<any[]>([])
+  const [payments, setPayments] = useState<any[]>([])
+  const [patients, setPatients] = useState<any[]>([])
+
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [newPayment, setNewPayment] = useState({
+    patient: '',
+    plan_name: '',
+    amount: '',
+    due_date: '',
+    status: 'pending',
+  })
 
   const loadData = async () => {
-    const data = await getAppointments()
-    setAppointments(data)
+    try {
+      const [appts, pyts] = await Promise.all([getAppointments(), getPayments()])
+      setAppointments(appts)
+      setPayments(pyts)
+      if (user?.role === 'psychologist' || user?.role === 'admin') {
+        const pts = await getPatients()
+        setPatients(pts)
+      }
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [user])
   useRealtime('appointments', () => {
     loadData()
   })
+  useRealtime('payments', () => {
+    loadData()
+  })
 
-  const upcoming = appointments.filter(
+  const upcomingAppts = appointments.filter(
     (a) => new Date(a.start_time) > new Date() && a.status === 'scheduled',
   )
-  const nextAppt = upcoming.length > 0 ? upcoming[0] : null
-  const todayAppts = appointments.filter(
-    (a) => format(new Date(a.start_time), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd'),
-  )
+  const sessionsThisMonth = appointments.filter((a) => isThisMonth(new Date(a.start_time))).length
 
-  if (user?.role === 'psychologist') {
-    return (
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-4xl font-serif text-primary tracking-tight mb-2">Resumo de Hoje</h1>
-          <p className="text-muted-foreground text-lg">
-            Você tem {todayAppts.length} sessões programadas para hoje.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="glass shadow-subtle border-none">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-primary/10 rounded-2xl">
-                  <Activity className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="font-serif text-xl">Total de Sessões</h3>
-              </div>
-              <p className="text-4xl font-light">{appointments.length}</p>
-            </CardContent>
-          </Card>
-          <Card className="glass shadow-subtle border-none">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-green-500/10 rounded-2xl">
-                  <CheckCircle2 className="w-6 h-6 text-green-600" />
-                </div>
-                <h3 className="font-serif text-xl">Concluídas</h3>
-              </div>
-              <p className="text-4xl font-light">
-                {appointments.filter((a) => a.status === 'completed').length}
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="glass shadow-subtle border-none">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-blue-500/10 rounded-2xl">
-                  <CalendarIcon className="w-6 h-6 text-blue-600" />
-                </div>
-                <h3 className="font-serif text-xl">Agendadas</h3>
-              </div>
-              <p className="text-4xl font-light">{upcoming.length}</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div>
-            <h2 className="text-2xl font-serif mb-6">Próxima Sessão</h2>
-            {nextAppt ? (
-              <div className="glass p-8 rounded-3xl border border-border/50 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full transition-transform group-hover:scale-110" />
-                <div className="flex items-start justify-between mb-8 relative z-10">
-                  <div>
-                    <p className="text-sm font-medium text-primary mb-1 uppercase tracking-wider">
-                      {format(new Date(nextAppt.start_time), 'EEEE, dd MMM', { locale: ptBR })}
-                    </p>
-                    <h3 className="text-3xl font-serif">{nextAppt.expand?.patient?.name}</h3>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-light">
-                      {format(new Date(nextAppt.start_time), 'HH:mm')}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">Duração: 1h</p>
-                  </div>
-                </div>
-                <div className="flex gap-4 relative z-10">
-                  <Button className="rounded-full px-8">Iniciar Sessão</Button>
-                  <Button variant="outline" className="rounded-full px-6">
-                    Ver Prontuário
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="glass p-8 rounded-3xl text-center border-dashed border-2">
-                <p className="text-muted-foreground">Nenhuma sessão futura agendada.</p>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-serif">Agenda do Dia</h2>
-              <Button variant="ghost" asChild className="text-primary hover:text-primary/80">
-                <Link to="/calendar">
-                  Ver Calendário <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
-            </div>
-            <div className="space-y-4">
-              {todayAppts.length > 0 ? (
-                todayAppts.map((appt) => (
-                  <div
-                    key={appt.id}
-                    className="glass p-4 rounded-2xl flex items-center justify-between border-border/50 hover:bg-background/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-background flex items-center justify-center border shadow-sm">
-                        <Clock className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-lg">{appt.expand?.patient?.name}</p>
-                        <p className="text-sm text-muted-foreground capitalize">{appt.status}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">{format(new Date(appt.start_time), 'HH:mm')}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-muted-foreground p-4">Agenda livre para hoje.</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
+  const handleCreatePayment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      await createPayment({
+        ...newPayment,
+        due_date: newPayment.due_date + ' 12:00:00',
+        amount: Number(newPayment.amount),
+      })
+      toast({ title: 'Pagamento registrado com sucesso' })
+      setIsPaymentModalOpen(false)
+      loadData()
+    } catch (error) {
+      toast({ title: 'Erro ao registrar pagamento', variant: 'destructive' })
+    }
   }
 
-  // Patient View
+  const handleUpdatePaymentStatus = async (id: string, status: string) => {
+    try {
+      await updatePayment(id, { status })
+      toast({ title: 'Status atualizado' })
+      loadData()
+    } catch (error) {
+      toast({ title: 'Erro ao atualizar', variant: 'destructive' })
+    }
+  }
+
+  const statusColor = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-green-500/10 text-green-600'
+      case 'overdue':
+        return 'bg-destructive/10 text-destructive'
+      default:
+        return 'bg-yellow-500/10 text-yellow-600'
+    }
+  }
+
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'Pago'
+      case 'overdue':
+        return 'Atrasado'
+      default:
+        return 'Pendente'
+    }
+  }
+
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      <div className="text-center py-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
-          <span className="text-primary font-serif text-3xl">~</span>
-        </div>
-        <h1 className="text-4xl sm:text-5xl font-serif text-primary tracking-tight mb-4">
-          Sua jornada importa.
-        </h1>
-        <p className="text-muted-foreground text-lg sm:text-xl max-w-2xl mx-auto">
-          Um espaço seguro para o seu desenvolvimento pessoal e bem-estar emocional.
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-serif text-primary">Dashboard</h1>
+        <p className="text-muted-foreground mt-1">
+          Bem-vindo(a) ao Sereno, seu espaço de bem-estar.
         </p>
       </div>
 
-      {nextAppt ? (
-        <div className="glass p-8 sm:p-12 rounded-[2rem] border-primary/20 shadow-elevation relative overflow-hidden group text-center sm:text-left">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-bl-full transition-transform duration-700 group-hover:scale-110" />
-          <div className="relative z-10 sm:flex items-center justify-between">
-            <div className="mb-6 sm:mb-0">
-              <p className="text-sm font-medium text-primary mb-2 uppercase tracking-wider">
-                Próxima Sessão
-              </p>
-              <h3 className="text-3xl sm:text-4xl font-serif mb-2">
-                {format(new Date(nextAppt.start_time), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-              </h3>
-              <p className="text-xl text-muted-foreground">
-                às {format(new Date(nextAppt.start_time), 'HH:mm')} com{' '}
-                {nextAppt.expand?.psychologist?.name}
-              </p>
-            </div>
-            <div>
-              <Button
-                size="lg"
-                className="rounded-full px-8 text-md h-14 w-full sm:w-auto shadow-sm transition-transform hover:-translate-y-1"
-              >
-                Acessar Sessão
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="glass p-12 rounded-[2rem] text-center border-dashed border-2 border-primary/20 bg-background/30">
-          <CalendarIcon className="w-12 h-12 text-primary/40 mx-auto mb-4" />
-          <h3 className="text-2xl font-serif mb-2">Nenhuma sessão agendada</h3>
-          <p className="text-muted-foreground mb-8">Que tal reservar um momento para você?</p>
-          <Button asChild size="lg" className="rounded-full px-8 h-12">
-            <Link to="/calendar">Agendar Nova Sessão</Link>
-          </Button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-12">
-        <Card className="glass shadow-subtle border-border/50 hover:bg-background/80 transition-colors">
-          <CardContent className="p-6">
-            <h3 className="font-serif text-xl mb-2">Histórico</h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Você completou {appointments.filter((a) => a.status === 'completed').length} sessões
-              até agora.
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="glass border-border/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Sessões neste Mês</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{sessionsThisMonth}</div>
+            <p className="text-xs text-muted-foreground">
+              Total de consultas agendadas e concluídas
             </p>
-            <Button variant="link" className="px-0 text-primary">
-              Ver evolução <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
           </CardContent>
         </Card>
-        <Card className="glass shadow-subtle border-border/50 hover:bg-background/80 transition-colors">
-          <CardContent className="p-6">
-            <h3 className="font-serif text-xl mb-2">Pagamentos</h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Sua situação financeira está em dia.
-            </p>
-            <Button variant="link" className="px-0 text-primary">
-              Ver recibos <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
+
+        <Card className="glass border-border/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Próximas Sessões</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{upcomingAppts.length}</div>
+            <p className="text-xs text-muted-foreground">Agendadas e não realizadas</p>
+          </CardContent>
+        </Card>
+
+        {(user?.role === 'psychologist' || user?.role === 'admin') && (
+          <Card className="glass border-border/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Pagamentos Pendentes</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {payments.filter((p) => p.status === 'pending').length}
+              </div>
+              <p className="text-xs text-muted-foreground">Aguardando recebimento</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      <div className="grid gap-8 md:grid-cols-2">
+        <Card className="glass border-border/50 col-span-1">
+          <CardHeader>
+            <CardTitle>Próximas Consultas</CardTitle>
+            <CardDescription>Suas sessões agendadas mais recentes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {upcomingAppts.slice(0, 5).map((appt) => (
+                <div
+                  key={appt.id}
+                  className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-background/50"
+                >
+                  <div>
+                    <p className="font-medium text-sm">
+                      {user?.role === 'psychologist'
+                        ? appt.expand?.patient?.name
+                        : appt.expand?.psychologist?.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(appt.start_time), "dd 'de' MMM 'às' HH:mm", {
+                        locale: ptBR,
+                      })}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="capitalize text-xs">
+                    {appt.status}
+                  </Badge>
+                </div>
+              ))}
+              {upcomingAppts.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Nenhuma sessão agendada.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass border-border/50 col-span-1">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Histórico Financeiro</CardTitle>
+              <CardDescription>Acompanhamento de pagamentos</CardDescription>
+            </div>
+            {(user?.role === 'psychologist' || user?.role === 'admin') && (
+              <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="rounded-full">
+                    <Plus className="w-4 h-4 mr-1" /> Novo
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="glass border-border/50">
+                  <DialogHeader>
+                    <DialogTitle>Registrar Pagamento</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleCreatePayment} className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label>Paciente</Label>
+                      <Select
+                        value={newPayment.patient}
+                        onValueChange={(v) => setNewPayment({ ...newPayment, patient: v })}
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um paciente" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {patients.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Plano / Descrição</Label>
+                      <Input
+                        value={newPayment.plan_name}
+                        onChange={(e) =>
+                          setNewPayment({ ...newPayment, plan_name: e.target.value })
+                        }
+                        required
+                        placeholder="Ex: Mensalidade, Sessão Avulsa"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Valor (R$)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={newPayment.amount}
+                          onChange={(e) => setNewPayment({ ...newPayment, amount: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Vencimento</Label>
+                        <Input
+                          type="date"
+                          value={newPayment.due_date}
+                          onChange={(e) =>
+                            setNewPayment({ ...newPayment, due_date: e.target.value })
+                          }
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Status Inicial</Label>
+                      <Select
+                        value={newPayment.status}
+                        onValueChange={(v) => setNewPayment({ ...newPayment, status: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pendente</SelectItem>
+                          <SelectItem value="paid">Pago</SelectItem>
+                          <SelectItem value="overdue">Atrasado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button type="submit" className="w-full rounded-full">
+                      Salvar Pagamento
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {(user?.role === 'psychologist' || user?.role === 'admin') && (
+                    <TableHead>Paciente</TableHead>
+                  )}
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Venc.</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {payments.slice(0, 5).map((payment) => (
+                  <TableRow key={payment.id}>
+                    {(user?.role === 'psychologist' || user?.role === 'admin') && (
+                      <TableCell className="font-medium whitespace-nowrap">
+                        {payment.expand?.patient?.name}
+                      </TableCell>
+                    )}
+                    <TableCell className="whitespace-nowrap">{payment.plan_name}</TableCell>
+                    <TableCell>R$ {payment.amount}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {format(parseISO(payment.due_date), 'dd/MM/yyyy')}
+                    </TableCell>
+                    <TableCell>
+                      {user?.role === 'psychologist' || user?.role === 'admin' ? (
+                        <Select
+                          value={payment.status}
+                          onValueChange={(v) => handleUpdatePaymentStatus(payment.id, v)}
+                        >
+                          <SelectTrigger
+                            className={`h-7 text-xs border-0 ${statusColor(payment.status)} rounded-full w-[110px]`}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pendente</SelectItem>
+                            <SelectItem value="paid">Pago</SelectItem>
+                            <SelectItem value="overdue">Atrasado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge
+                          className={`${statusColor(payment.status)} bg-opacity-10`}
+                          variant="outline"
+                        >
+                          {statusLabel(payment.status)}
+                        </Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {payments.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-4">
+                      Nenhum pagamento registrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

@@ -29,8 +29,18 @@ export function AppointmentDetailsDialog({
 
   const isFuture = new Date(appt.start_time) > new Date()
   const isScheduled = appt.status === 'scheduled'
+  const isCancellable =
+    new Date(appt.start_time).getTime() - new Date().getTime() > 24 * 60 * 60 * 1000
 
   const handleCancel = async () => {
+    if (!isCancellable) {
+      toast({
+        title: 'Cancelamento não permitido',
+        description: 'Cancelamentos só são permitidos com pelo menos 24 horas de antecedência.',
+        variant: 'destructive',
+      })
+      return
+    }
     if (!confirm('Deseja realmente cancelar esta sessão?')) return
     setLoading(true)
     try {
@@ -86,14 +96,21 @@ export function AppointmentDetailsDialog({
             Fechar
           </Button>
           {isFuture && isScheduled && (
-            <Button
-              variant="destructive"
-              onClick={handleCancel}
-              disabled={loading}
-              className="rounded-full"
-            >
-              Cancelar Sessão
-            </Button>
+            <div className="flex flex-col items-end gap-2">
+              <Button
+                variant="destructive"
+                onClick={handleCancel}
+                disabled={loading || !isCancellable}
+                className="rounded-full"
+              >
+                Cancelar Sessão
+              </Button>
+              {!isCancellable && (
+                <p className="text-xs text-destructive max-w-[200px] text-right">
+                  Cancelamentos só são permitidos com pelo menos 24 horas de antecedência.
+                </p>
+              )}
+            </div>
           )}
         </div>
       </DialogContent>

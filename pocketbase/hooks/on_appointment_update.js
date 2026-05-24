@@ -1,27 +1,28 @@
-onRecordUpdateRequest((e) => {
-  e.next()
-  try {
-    const status = e.record.getString('status')
-    const originalStatus = e.record.original().getString('status')
+onRecordAfterUpdateSuccess((e) => {
+  const appt = e.record
+  const oldStatus = appt.original().getString('status')
+  const newStatus = appt.getString('status')
 
-    if (status !== originalStatus) {
-      const notifs = $app.findCollectionByNameOrId('notifications')
-      const patientId = e.record.getString('patient')
-      const psychId = e.record.getString('psychologist')
-      const creatorId = e.auth?.id
-      const targetId = creatorId === patientId ? psychId : patientId
+  if (oldStatus !== newStatus) {
+    const notifications = $app.findCollectionByNameOrId('notifications')
 
-      if (targetId) {
-        const notif = new Record(notifs)
-        notif.set('recipient', targetId)
-        let msg = 'Atualização no seu agendamento.'
-        if (status === 'cancelled') msg = 'Um agendamento foi cancelado.'
-        if (status === 'completed') msg = 'Uma sessão foi marcada como concluída.'
-        notif.set('message', msg)
-        $app.save(notif)
-      }
+    let msg = `O status da sua sessão mudou para: ${newStatus}`
+    if (newStatus === 'cancelled') {
+      msg = 'Sua sessão foi cancelada.'
     }
-  } catch (err) {
-    $app.logger().error('Notification update failed', 'error', err.message)
+
+    const n1 = new Record(notifications)
+    n1.set('recipient', appt.get('patient'))
+    n1.set('message', msg)
+    n1.set('read', false)
+    $app.save(n1)
+
+    const n2 = new Record(notifications)
+    n2.set('recipient', appt.get('psychologist'))
+    n2.set('message', msg)
+    n2.set('read', false)
+    $app.save(n2)
   }
+
+  e.next()
 }, 'appointments')

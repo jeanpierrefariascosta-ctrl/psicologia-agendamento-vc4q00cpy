@@ -38,3 +38,24 @@ export const getPsychologists = async () => {
     filter: `role="psychologist"`,
   })
 }
+
+export const getPatients = async () => {
+  return pb.collection('users').getFullList({
+    filter: `role="patient"`,
+  })
+}
+
+export const getPayments = async () => {
+  return pb.collection('payments').getFullList({
+    expand: 'patient',
+    sort: '-due_date',
+  })
+}
+
+export const createPayment = async (data: Partial<any>) => {
+  return pb.collection('payments').create(data)
+}
+
+export const updatePayment = async (id: string, data: Partial<any>) => {
+  return pb.collection('payments').update(id, data)
+}
