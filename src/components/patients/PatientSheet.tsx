@@ -16,6 +16,7 @@ import { createPatient, updatePatient } from '@/services/api'
 import { useToast } from '@/hooks/use-toast'
 import pb from '@/lib/pocketbase/client'
 import { Download, File } from 'lucide-react'
+import { extractFieldErrors, type FieldErrors } from '@/lib/pocketbase/errors'
 
 export function PatientSheet({ open, onOpenChange, patient, onSaved }: any) {
   const { toast } = useToast()
@@ -26,6 +27,7 @@ export function PatientSheet({ open, onOpenChange, patient, onSaved }: any) {
   const [password, setPassword] = useState('')
   const [anamnesis, setAnamnesis] = useState('')
   const [files, setFiles] = useState<File[]>([])
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
   useEffect(() => {
     if (open) {
@@ -35,12 +37,14 @@ export function PatientSheet({ open, onOpenChange, patient, onSaved }: any) {
       setPassword('')
       setAnamnesis(patient?.anamnesis || '')
       setFiles([])
+      setFieldErrors({})
     }
   }, [open, patient])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setFieldErrors({})
 
     const formData = new FormData()
     formData.append('name', name)
@@ -78,7 +82,13 @@ export function PatientSheet({ open, onOpenChange, patient, onSaved }: any) {
       onSaved()
       onOpenChange(false)
     } catch (err: any) {
-      toast({ title: 'Erro ao salvar', description: err.message, variant: 'destructive' })
+      const errors = extractFieldErrors(err)
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors)
+        toast({ title: 'Corrija os erros no formulário.', variant: 'destructive' })
+      } else {
+        toast({ title: 'Erro ao salvar', description: err.message, variant: 'destructive' })
+      }
     } finally {
       setLoading(false)
     }
@@ -106,6 +116,9 @@ export function PatientSheet({ open, onOpenChange, patient, onSaved }: any) {
                 <div className="space-y-2">
                   <Label>Nome Completo</Label>
                   <Input required value={name} onChange={(e) => setName(e.target.value)} />
+                  {fieldErrors.name && (
+                    <p className="text-xs text-destructive">{fieldErrors.name}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>E-mail</Label>
@@ -115,6 +128,9 @@ export function PatientSheet({ open, onOpenChange, patient, onSaved }: any) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
+                  {fieldErrors.email && (
+                    <p className="text-xs text-destructive">{fieldErrors.email}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Telefone</Label>
@@ -123,6 +139,9 @@ export function PatientSheet({ open, onOpenChange, patient, onSaved }: any) {
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="(00) 00000-0000"
                   />
+                  {fieldErrors.phone && (
+                    <p className="text-xs text-destructive">{fieldErrors.phone}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>
@@ -134,6 +153,9 @@ export function PatientSheet({ open, onOpenChange, patient, onSaved }: any) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
+                  {fieldErrors.password && (
+                    <p className="text-xs text-destructive">{fieldErrors.password}</p>
+                  )}
                 </div>
               </div>
             </div>

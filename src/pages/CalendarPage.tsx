@@ -8,7 +8,7 @@ import { useRealtime } from '@/hooks/use-realtime'
 import { useAuth } from '@/hooks/use-auth'
 import { cn } from '@/lib/utils'
 import { AppointmentDetailsDialog } from '@/components/calendar/AppointmentDetailsDialog'
-import { BookingDialog } from '@/components/calendar/BookingDialog'
+import { PatientBookingDialog } from '@/components/calendar/PatientBookingDialog'
 import { PsychologistBookingDialog } from '@/components/calendar/PsychologistBookingDialog'
 
 export default function CalendarPage() {
@@ -17,10 +17,9 @@ export default function CalendarPage() {
   const [appointments, setAppointments] = useState<any[]>([])
 
   const [detailsOpen, setDetailsOpen] = useState(false)
-  const [bookingOpen, setBookingOpen] = useState(false)
+  const [patientBookingOpen, setPatientBookingOpen] = useState(false)
   const [psychBookingOpen, setPsychBookingOpen] = useState(false)
   const [selectedAppt, setSelectedAppt] = useState<any>(null)
-  const [selectedSlot, setSelectedSlot] = useState({ date: new Date(), hour: 9 })
 
   const loadData = async () => {
     const data = await getAppointments()
@@ -44,12 +43,7 @@ export default function CalendarPage() {
       setSelectedAppt(appt)
       setDetailsOpen(true)
     } else if (user?.role === 'patient') {
-      const slotTime = new Date(d)
-      slotTime.setHours(h)
-      if (slotTime > new Date()) {
-        setSelectedSlot({ date: d, hour: h })
-        setBookingOpen(true)
-      }
+      setPatientBookingOpen(true)
     }
   }
 
@@ -74,6 +68,14 @@ export default function CalendarPage() {
               className="rounded-full shadow-sm mb-2 sm:mb-0 w-full sm:w-auto"
             >
               <Plus className="w-4 h-4 mr-2" /> Novo Agendamento
+            </Button>
+          )}
+          {user?.role === 'patient' && (
+            <Button
+              onClick={() => setPatientBookingOpen(true)}
+              className="rounded-full shadow-sm mb-2 sm:mb-0 w-full sm:w-auto"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Agendar Consulta
             </Button>
           )}
           <div className="flex items-center gap-2 bg-background/50 p-1.5 rounded-full border shadow-sm w-full sm:w-auto justify-between sm:justify-start">
@@ -188,11 +190,10 @@ export default function CalendarPage() {
         onOpenChange={setDetailsOpen}
         appt={selectedAppt}
       />
-      <BookingDialog
-        open={bookingOpen}
-        onOpenChange={setBookingOpen}
-        slotDate={selectedSlot.date}
-        slotHour={selectedSlot.hour}
+      <PatientBookingDialog
+        open={patientBookingOpen}
+        onOpenChange={setPatientBookingOpen}
+        onSuccess={loadData}
       />
       <PsychologistBookingDialog open={psychBookingOpen} onOpenChange={setPsychBookingOpen} />
     </div>

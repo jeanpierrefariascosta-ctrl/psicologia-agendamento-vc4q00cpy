@@ -34,6 +34,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { PsychologistBookingDialog } from '@/components/calendar/PsychologistBookingDialog'
+import { PatientBookingDialog } from '@/components/calendar/PatientBookingDialog'
+import { AppointmentDetailsDialog } from '@/components/calendar/AppointmentDetailsDialog'
 import { toast } from '@/hooks/use-toast'
 
 export default function Index() {
@@ -41,7 +43,10 @@ export default function Index() {
   const [appointments, setAppointments] = useState<any[]>([])
   const [payments, setPayments] = useState<any[]>([])
   const [bookingOpen, setBookingOpen] = useState(false)
+  const [patientBookingOpen, setPatientBookingOpen] = useState(false)
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+  const [selectedAppt, setSelectedAppt] = useState<any>(null)
+  const [detailsOpen, setDetailsOpen] = useState(false)
 
   const loadData = async () => {
     try {
@@ -73,6 +78,11 @@ export default function Index() {
         {user?.role === 'psychologist' && (
           <Button onClick={() => setBookingOpen(true)} className="rounded-full shadow-sm">
             <Plus className="w-4 h-4 mr-2" /> Novo Agendamento
+          </Button>
+        )}
+        {user?.role === 'patient' && (
+          <Button onClick={() => setPatientBookingOpen(true)} className="rounded-full shadow-sm">
+            <Plus className="w-4 h-4 mr-2" /> Agendar Consulta
           </Button>
         )}
       </div>
@@ -114,7 +124,11 @@ export default function Index() {
                     return (
                       <div
                         key={appt.id}
-                        className="flex items-center justify-between p-3 rounded-xl bg-background/50 border border-border/50"
+                        className="flex items-center justify-between p-3 rounded-xl bg-background/50 border border-border/50 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => {
+                          setSelectedAppt(appt)
+                          setDetailsOpen(true)
+                        }}
                       >
                         <div className="flex flex-col">
                           <span className="font-medium">{otherUser?.name || 'Desconhecido'}</span>
@@ -216,6 +230,17 @@ export default function Index() {
       </Tabs>
 
       <PsychologistBookingDialog open={bookingOpen} onOpenChange={setBookingOpen} />
+      <PatientBookingDialog
+        open={patientBookingOpen}
+        onOpenChange={setPatientBookingOpen}
+        onSuccess={loadData}
+      />
+      <AppointmentDetailsDialog
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        appt={selectedAppt}
+      />
+
       {user?.role === 'psychologist' && (
         <NewPaymentDialog
           open={paymentDialogOpen}

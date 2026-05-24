@@ -39,6 +39,19 @@ export const getPsychologists = async () => {
   })
 }
 
+export const getPsychologistAvailability = async (psychId: string) => {
+  return pb.collection('availability').getFullList({
+    filter: `psychologist="${psychId}"`,
+  })
+}
+
+export const getPsychologistAppointments = async (psychId: string) => {
+  const now = new Date().toISOString()
+  return pb.collection('appointments').getFullList({
+    filter: `psychologist="${psychId}" && start_time >= "${now}" && status != "cancelled"`,
+  })
+}
+
 export const getPatients = async () => {
   return pb.collection('users').getFullList({
     filter: `role="patient"`,
